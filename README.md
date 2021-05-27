@@ -18,20 +18,23 @@ Auto Slot Booking when there is a vaccine slot available at your location, by ru
 
     
  - ### Installing Packages and Requirements
+   - Step 1 : First update pkg
+    
+         pkg update
 
-   - Step 1 : Install git
+   - Step 2 : Install git
 
          pkg install git
 
-   - Step 2 : Clone repo 
+   - Step 3 : Clone repo 
 
          git clone https://github.com/truroshan/cowin-termux.git
         
-   - Step 3 : Open Cloned Folder
+   - Step 4 : Open Cloned Folder
         
          cd cowin-termux
 
-   - Step 4: run install.sh 
+   - Step 5: run install.sh 
          
          bash install.sh
   - ### OTP Fetching Methods
