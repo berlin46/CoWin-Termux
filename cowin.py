@@ -13,6 +13,7 @@ import re
 import os
 
 OTP_SITE_URL = None
+OTP_VALID_DURATION_SECONDS = 180
 ''' 
 Add Worker Domain here example : https://db.domain.workers.dev
 Check this :  https://github.com/truroshan/CloudflareCoWinDB
@@ -190,17 +191,22 @@ class CoWinBook():
         otp = ""
 
         try:    
-            curr_msg = self.get_msg().get("body")
+            curr_msg = get_msg()
+            curr_msg_body = curr_msg.get("body")
 
             for i in reversed(range(30)):
             
-                last_msg = self.get_msg().get("body",'')
+                last_msg = get_msg()
+                last_msg_body = last_msg.get("body",'')
             
                 print(f'Waiting for OTP {i} sec')
                 sys.stdout.write("\033[F")
 
-                if curr_msg != last_msg and "cowin" in last_msg.lower():
-                    otp = re.findall("(\d{6})",last_msg)[0]
+                d1 = datetime.datetime.strptime(last_msg.get("received"), '%Y-%m-%d %H:%M:%S')
+                d2 = datetime.datetime.now() # current date and time
+                diff = (d2 - d1).total_seconds()
+                if (curr_msg_body != last_msg_body and "cowin" in last_msg_body.lower()) or diff <= OTP_VALID_DURATION_SECONDS:
+                    otp = re.findall("(\d{6})",last_msg_body)[0]
                     print("\nOTP Recieved : ",otp)
                     break
 
@@ -283,7 +289,7 @@ class CoWinBook():
                     session.get('min_age_limit') == self.age and \
                     center.get('center_id') in  self.center_id:
                     self.slot_time = session.get('slots')[0]
-                    
+
                     MSG = f'💉 {capacity} #{vaccine_name} / {session_date} / {center_name} 📍{self.pin}'
 
                     # Send Notification via Termux:API App
