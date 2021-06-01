@@ -261,8 +261,13 @@ class CoWinBook():
         
         self.requestStatus = response.status_code
 
-        if response.ok:
+        if response.status_code == 200:
+            # CoWIN server may respond back with HTTP 204 so response.ok 
+            # will not be right to depend upon. The content will be empty
+            # and so it will crash if we try to get the JSON body.
             self.check_slot(response.json())
+        elif response.ok: # We have received ok response but without content
+            self.request_slot()
         elif response.status_code == 401:
             print("Re-login Account : " + datetime.now().strftime("%H:%M:%S") + " 🤳")
             self.checkToken()
@@ -410,17 +415,31 @@ class CoWinBook():
         clear_screen()
         return index
 
-    # Select Center for Vaccination
-    def select_center(self):
-
+    def fetch_center(self):
         if self.checkByPincode:
             response = self.session.get(
                 f'https://cdn-api.co-vin.in/api/v2/appointment/sessions/calendarByPin?pincode={self.pin}&date={self.todayDate}'
-                ).json()
+                )
         else: # Check by District
             response = self.session.get(
                 f'https://cdn-api.co-vin.in/api/v2/appointment/sessions/calendarByDistrict?district_id={self.pin}&date={self.todayDate}'
-                ).json()
+                )
+        return response
+
+    # Select Center for Vaccination
+    def select_center(self):
+        response = self.fetch_center()
+
+        # CoWIN server may respond back with HTTP 204 so response.ok 
+        # will not be right to depend upon. The content will be empty
+        # and so it will crash if we try to get the JSON body.
+        while response.status_code != 200:
+            print(f'Trying to fetch center detail. Please wait...')
+            sys.stdout.write("\033[F")
+            time.sleep(1)
+            response = self.fetch_center()
+
+        response = response.json()
 
         CENTERS = {}
         INDEX_S = []
