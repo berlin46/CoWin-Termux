@@ -191,19 +191,19 @@ class CoWinBook():
         otp = ""
 
         try:    
-            curr_msg = get_msg()
+            curr_msg = self.get_msg()
             curr_msg_body = curr_msg.get("body")
 
             for i in reversed(range(30)):
             
-                last_msg = get_msg()
+                last_msg = self.get_msg()
                 last_msg_body = last_msg.get("body",'')
             
                 print(f'Waiting for OTP {i} sec')
                 sys.stdout.write("\033[F")
 
-                d1 = datetime.datetime.strptime(last_msg.get("received"), '%Y-%m-%d %H:%M:%S')
-                d2 = datetime.datetime.now() # current date and time
+                d1 = datetime.strptime(last_msg.get("received"), '%Y-%m-%d %H:%M:%S')
+                d2 = datetime.now() # current date and time
                 diff = (d2 - d1).total_seconds()
                 if (curr_msg_body != last_msg_body and "cowin" in last_msg_body.lower()) or diff <= OTP_VALID_DURATION_SECONDS:
                     otp = re.findall("(\d{6})",last_msg_body)[0]
