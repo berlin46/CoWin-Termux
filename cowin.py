@@ -132,7 +132,7 @@ class CoWinBook():
             self.session.headers.update({
                     'Authorization': 'Bearer {}'.format(self.bearerToken)
                 })
-            self.session.get('https://cdn-api.co-vin.in/api/v2/appointment/beneficiaries').json()
+            self.fetch_beneficiaries().json()
         except (FileNotFoundError,json.decoder.JSONDecodeError):
             self.login_cowin()
         
@@ -481,10 +481,20 @@ class CoWinBook():
                 CENTER_ID.append(CENTERS.get(int(index)))
         self.center_id = CENTER_ID
 
+    def fetch_beneficiaries(self):
+        return self.session.get('https://cdn-api.co-vin.in/api/v2/appointment/beneficiaries')
+
     # Select User to Book Slot
     def select_beneficiaries(self):
 
-        response = self.session.get('https://cdn-api.co-vin.in/api/v2/appointment/beneficiaries').json()
+        response = self.fetch_beneficiaries()
+        while response.status_code != 200:
+            print(f'Please wait...')
+            sys.stdout.write("\033[F")
+            time.sleep(5)
+            response = self.fetch_beneficiaries()
+        
+        response = response.json()
 
         USERS = {}
         INDEX_S = []
