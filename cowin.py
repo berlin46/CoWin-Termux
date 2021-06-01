@@ -271,7 +271,6 @@ class CoWinBook():
                 
                 self.vacc_center = center.get('center_id')
                 self.vacc_session = session.get("session_id")
-                self.slot_time = session.get('slots')[0]
 
                 center_name = center.get('name')
                 capacity = session.get(f'available_capacity_dose{self.dose}')
@@ -283,7 +282,8 @@ class CoWinBook():
                     self.vaccine in vaccine_name and \
                     session.get('min_age_limit') == self.age and \
                     center.get('center_id') in  self.center_id:
-
+                    self.slot_time = session.get('slots')[0]
+                    
                     MSG = f'💉 {capacity} #{vaccine_name} / {session_date} / {center_name} 📍{self.pin}'
 
                     # Send Notification via Termux:API App
