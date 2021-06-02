@@ -13,6 +13,7 @@ import re
 import os
 
 OTP_SITE_URL = None
+OTP_VALID_DURATION_SECONDS = 180
 ''' 
 Add Worker Domain here example : https://db.domain.workers.dev
 Check this :  https://github.com/truroshan/CloudflareCoWinDB
@@ -131,7 +132,7 @@ class CoWinBook():
             self.session.headers.update({
                     'Authorization': 'Bearer {}'.format(self.bearerToken)
                 })
-            self.session.get('https://cdn-api.co-vin.in/api/v2/appointment/beneficiaries').json()
+            self.fetch_beneficiaries().json()
         except (FileNotFoundError,json.decoder.JSONDecodeError):
             self.login_cowin()
         
@@ -190,17 +191,22 @@ class CoWinBook():
         otp = ""
 
         try:    
-            curr_msg = self.get_msg().get("body")
+            curr_msg = self.get_msg()
+            curr_msg_body = curr_msg.get("body")
 
             for i in reversed(range(30)):
             
-                last_msg = self.get_msg().get("body",'')
+                last_msg = self.get_msg()
+                last_msg_body = last_msg.get("body",'')
             
                 print(f'Waiting for OTP {i} sec')
                 sys.stdout.write("\033[F")
 
-                if curr_msg != last_msg and "cowin" in last_msg.lower():
-                    otp = re.findall("(\d{6})",last_msg)[0]
+                d1 = datetime.strptime(last_msg.get("received"), '%Y-%m-%d %H:%M:%S')
+                d2 = datetime.now() # current date and time
+                diff = (d2 - d1).total_seconds()
+                if (curr_msg_body != last_msg_body and "cowin" in last_msg_body.lower()) or diff <= OTP_VALID_DURATION_SECONDS:
+                    otp = re.findall("(\d{6})",last_msg_body)[0]
                     print("\nOTP Recieved : ",otp)
                     break
 
@@ -255,8 +261,13 @@ class CoWinBook():
         
         self.requestStatus = response.status_code
 
-        if response.ok:
+        if response.status_code == 200:
+            # CoWIN server may respond back with HTTP 204 so response.ok 
+            # will not be right to depend upon. The content will be empty
+            # and so it will crash if we try to get the JSON body.
             self.check_slot(response.json())
+        elif response.ok: # We have received ok response but without content
+            self.request_slot()
         elif response.status_code == 401:
             print("Re-login Account : " + datetime.now().strftime("%H:%M:%S") + " 🤳")
             self.checkToken()
@@ -283,7 +294,7 @@ class CoWinBook():
                     session.get('min_age_limit') == self.age and \
                     center.get('center_id') in  self.center_id:
                     self.slot_time = session.get('slots')[0]
-                    
+
                     MSG = f'💉 {capacity} #{vaccine_name} / {session_date} / {center_name} 📍{self.pin}'
 
                     # Send Notification via Termux:API App
@@ -404,17 +415,31 @@ class CoWinBook():
         clear_screen()
         return index
 
-    # Select Center for Vaccination
-    def select_center(self):
-
+    def fetch_center(self):
         if self.checkByPincode:
             response = self.session.get(
                 f'https://cdn-api.co-vin.in/api/v2/appointment/sessions/calendarByPin?pincode={self.pin}&date={self.todayDate}'
-                ).json()
+                )
         else: # Check by District
             response = self.session.get(
                 f'https://cdn-api.co-vin.in/api/v2/appointment/sessions/calendarByDistrict?district_id={self.pin}&date={self.todayDate}'
-                ).json()
+                )
+        return response
+
+    # Select Center for Vaccination
+    def select_center(self):
+        response = self.fetch_center()
+
+        # CoWIN server may respond back with HTTP 204 so response.ok 
+        # will not be right to depend upon. The content will be empty
+        # and so it will crash if we try to get the JSON body.
+        while response.status_code != 200:
+            print(f'Trying to fetch center detail. Please wait...')
+            sys.stdout.write("\033[F")
+            time.sleep(1)
+            response = self.fetch_center()
+
+        response = response.json()
 
         CENTERS = {}
         INDEX_S = []
@@ -456,10 +481,20 @@ class CoWinBook():
                 CENTER_ID.append(CENTERS.get(int(index)))
         self.center_id = CENTER_ID
 
+    def fetch_beneficiaries(self):
+        return self.session.get('https://cdn-api.co-vin.in/api/v2/appointment/beneficiaries')
+
     # Select User to Book Slot
     def select_beneficiaries(self):
 
-        response = self.session.get('https://cdn-api.co-vin.in/api/v2/appointment/beneficiaries').json()
+        response = self.fetch_beneficiaries()
+        while response.status_code != 200:
+            print(f'Please wait...')
+            sys.stdout.write("\033[F")
+            time.sleep(5)
+            response = self.fetch_beneficiaries()
+        
+        response = response.json()
 
         USERS = {}
         INDEX_S = []
