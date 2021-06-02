@@ -51,7 +51,7 @@ class CoWinBook():
 
         # Cron Time
         global TIME
-        TIME = 8 if time < 10 else time
+        TIME = time
 
         # Include today session for Booking Slot
         self.bookToday =  0 if bookToday is True else 1
