@@ -1,4 +1,4 @@
-#  CoWIN Auto Booking Slot (Up : 02/06 )
+#  CoWIN Auto Booking Slot (Up : 03/06 )
 
 Auto Slot Booking when there is a vaccine slot available at your location, by running a script on your phone. 
 
