@@ -216,7 +216,7 @@ class CoWinBook():
                 print(f'Waiting for OTP {i} sec')
                 self.set_cursor()
 
-                d1 = datetime.strptime(last_msg.get("received","2019-12-01 09:09"), '%Y-%m-%d %H:%M')
+                d1 = datetime.strptime(last_msg.get("received","2019-12-01 09:09:09"), '%Y-%m-%d %H:%M:%S')
                 d2 = datetime.now() # current date and time
                 diff = (d2 - d1).total_seconds()
                 if (curr_msg_body != last_msg_body and "cowin" in last_msg_body.lower()) or diff <= OTP_VALID_DURATION_SECONDS:
