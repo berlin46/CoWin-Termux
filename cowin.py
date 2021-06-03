@@ -1,5 +1,4 @@
 try:
-    import schedule
     from bs4 import BeautifulSoup
     from datetime import datetime
     import subprocess
@@ -78,7 +77,7 @@ class CoWinBook():
         
         # Request Session
         self.session =  requests.Session() 
-        self.requestStatus = None
+        self.requestStatus = 0
 
         # Data for sending request
         self.data = {} 
@@ -217,7 +216,7 @@ class CoWinBook():
                 print(f'Waiting for OTP {i} sec')
                 self.set_cursor()
 
-                d1 = datetime.strptime(last_msg.get("received","2019-12-01 09:09:09"), '%Y-%m-%d %H:%M:%S')
+                d1 = datetime.strptime(last_msg.get("received","2019-12-01 09:09"), '%Y-%m-%d %H:%M')
                 d2 = datetime.now() # current date and time
                 diff = (d2 - d1).total_seconds()
                 if (curr_msg_body != last_msg_body and "cowin" in last_msg_body.lower()) or diff <= OTP_VALID_DURATION_SECONDS:
@@ -275,14 +274,24 @@ class CoWinBook():
         else: # Check by District
             response = self.session.get(f'https://cdn-api.co-vin.in/api/v2/appointment/sessions/calendarByDistrict?district_id={self.pin}&date={todayDate}')
         
-        self.requestStatus = response.status_code
+        status =  response.status_code
 
-        if response.status_code == 200:
+        if status == 200:
             self.check_slot(response.json())
-        elif response.status_code == 401:
+        elif status == 401:
             print("Re-login Account : " + datetime.now().strftime("%H:%M:%S") + " 🤳")
             self.checkToken()
             self.request_slot()
+        else:
+            self.requestStatus += 1
+            if self.requestStatus >= 4:
+                self.requestStatus = 0
+                self.login_cowin()
+                time.sleep(7)
+
+        # When last Checked
+        print(f'''Last Checked {status} {"✅" if status == 200 else "⚠️" } : ''' + datetime.now().strftime("%H:%M:%S") + " 🕐")
+        self.set_cursor()
 
     # Check Slot availability 
     def check_slot(self,response):
@@ -318,10 +327,6 @@ class CoWinBook():
                         # scheduler.shutdown(wait=False)
                         print("Shutting Down CoWin Script 👩‍💻 ")
                         exit()
-
-        # When last Checked
-        print(f"Last Checked {self.requestStatus} ✅ : " + datetime.now().strftime("%H:%M:%S") + " 🕐")
-        self.set_cursor()
 
     # Get Solved Captcha in String
     def get_captcha(self):
@@ -366,14 +371,15 @@ class CoWinBook():
     # Book Slot for Vaccination
     def book_slot(self):
         
-        captcha = self.get_captcha()
+        # CoWIN Removed Captcha
+        # captcha = self.get_captcha()
 
         self.data = {
             "center_id":self.vacc_center ,
             "session_id":self.vacc_session,
             "beneficiaries":self.user_id,
             "slot":self.slot_time,
-            "captcha": captcha,
+            # "captcha": captcha,
             "dose": self.dose
             }
 
@@ -401,9 +407,9 @@ class CoWinBook():
 
     # Set details about Vaacination Center and User Id
     def setup_details(self):
-        
-        self.select_center()
         self.select_beneficiaries()
+        self.select_center()
+        
 
     # Get District Id
     def get_district_id(self):
@@ -605,14 +611,26 @@ if __name__ == '__main__':
  
     # Check for Slot
     # scheduler.add_job(cowin.book_now, 'interval',id = "slot",seconds = TIME, misfire_grace_time=2,replace_existing=True)
-    schedule.every(TIME).seconds.do(cowin.book_now)
+    # schedule.every(TIME).seconds.do(cowin.book_now)
     
     # Check Token every 3 min
     # scheduler.add_job(cowin.checkToken, 'cron',id ="login", minute = f'*/3',misfire_grace_time= 30)
-    schedule.every(3).minutes.do(cowin.checkToken)
+    # schedule.every(3).minutes.do(cowin.checkToken)
 
     # scheduler.start()
 
+    # while True:
+    # schedule.run_pending()
+        # time.sleep(1)
+    
     while True:
-        schedule.run_pending()
+        timeObj = datetime.now()
+        _min, _sec = timeObj.minute , timeObj.second
+        
+        if _min % 3 == 0:
+            cowin.checkToken()
+        
+        if _sec % TIME == 0:
+            cowin.book_now()
+
         time.sleep(1)
