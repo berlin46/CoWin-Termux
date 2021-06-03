@@ -301,10 +301,10 @@ class CoWinBook():
                 
                 vaccine_name = session.get('vaccine')
 
-                if capacity > 1 and \
+                if capacity > 0 and \
                     (self.vaccine in vaccine_name or self.vaccine == "ANY") and \
                     session.get('min_age_limit') == self.age and \
-                    center.get('center_id') in  self.center_id:
+                    ( center.get('center_id') in  self.center_id or not self.center_id):
 
                     self.slot_time = session.get('slots')[0]
 
@@ -484,9 +484,16 @@ class CoWinBook():
             
         if counter == 1:
             # clear_screen()
-            print(f"No Center available Vaccine : ( 💉{self.vaccine}) Fee Type : ({self.vacc_fee_type}).")
-            self.shutting_down()
-            exit()
+            print(f"No {self.age}+ Centers available at this time.\nVaccine Type : {self.vaccine} 💉  Fee Type : ({self.vacc_fee_type}).")
+            line_break()
+            print(f"If you still want to book slot 😌.")
+            print(f"**Script will book at any center in this pin({self.pin}) 📍 ")
+            yes = input("\nPress📲 Y(enter)/N: ")
+            if yes.upper() == "N":
+                self.shutting_down()
+                exit()
+            clear_screen()
+            return
 
         print()
         line_break()
