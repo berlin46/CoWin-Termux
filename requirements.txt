@@ -2,4 +2,5 @@ fire
 apscheduler
 fake-useragent
 bs4
+schedule
 cowin
