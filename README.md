@@ -2,10 +2,6 @@
 
 Auto Slot Booking when there is a vaccine slot available at your location, by running a script on your phone. 
 
-**If you like my work, you can support me by buying me a coffee by clicking the link below**
-
-<a href="https://www.buymeacoffee.com/truroshan" target="_blank"><img src="https://www.buymeacoffee.com/assets/img/custom_images/orange_img.png" alt="Buy Me A Coffee" style="height: 41px !important;width: 174px !important;box-shadow: 0px 3px 2px 0px rgba(190, 190, 190, 0.5) !important;-webkit-box-shadow: 0px 3px 2px 0px rgba(190, 190, 190, 0.5) !important;" ></a>        [Telegram Group](https://t.me/CoWIN_Termux)
-![](https://gist.githubusercontent.com/m8rge/4c2b36369c9f936c02ee883ca8ec89f1/raw/c03fd44ee2b63d7a2a195ff44e9bb071e87b4a40/telegram-single-path-24px.svg)
 
 https://user-images.githubusercontent.com/45506201/120487245-6bdb9300-c3d3-11eb-8983-fef996227eb9.mp4
 
